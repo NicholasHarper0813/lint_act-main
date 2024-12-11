@@ -1,12 +1,7 @@
 const https = require("https");
 
-/**
- * Helper function for making HTTP requests
- * @param {string | URL} url - Request URL
- * @param {object} options - Request options
- * @returns {Promise<object>} - JSON response
- */
-function request(url, options) {
+function request(url, options) 
+{
 	return new Promise((resolve, reject) => {
 		const req = https
 			.request(url, options, (res) => {
@@ -26,9 +21,12 @@ function request(url, options) {
 				});
 			})
 			.on("error", reject);
-		if (options.body) {
+		if (options.body) 
+		{
 			req.end(JSON.stringify(options.body));
-		} else {
+		} 
+		else 
+		{
 			req.end();
 		}
 	});
