@@ -1,0 +1,645 @@
+name: Lint Action
+author: Samuel Meuli
+description: GitHub Action for detecting and fixing linting errors
+
+inputs:
+  github_token:
+    description: The GitHub token used to authenticated with GitHub.
+    required: false
+    default: ${{ github.token }}
+  continue_on_error:
+    description: Whether the workflow run should also fail when linter failures are detected
+    required: false
+    default: "true"
+  auto_fix:
+    description: Whether linters should try to fix code style issues automatically
+    required: false
+    default: "false"
+  commit:
+    description: Whether to commit and push the changes made by auto_fix
+    required: false
+    default: "true"
+  git_no_verify:
+    description: Bypass the pre-commit and pre-push git hooks
+    required: false
+    default: "false"
+  git_name:
+    description: Username for auto-fix commits
+    required: false
+    default: Lint Action
+  git_email:
+    description: Email address for auto-fix commits
+    required: false
+    default: "lint-action@samuelmeuli.com"
+  commit_message:
+    description: 'Template for auto-fix commit messages. The "${linter}" variable can be used to insert the name of the linter which has created the auto-fix'
+    required: false
+    default: "Fix code style issues with ${linter}"
+  check_name:
+    description: 'Template for the name of the check run. The "${linter}" and "${dir}" variables can be used to insert the name and directory of the linter.'
+    required: false
+    default: "${linter}"
+  neutral_check_on_warning:
+    description: Whether the check run should conclude with a neutral status instead of success when the linter finds only warnings
+    required: false
+    default: "false"
+
+  # CSS
+
+  stylelint:
+    description: Enable or disable stylelint checks
+    required: false
+    default: "false"
+  stylelint_args:
+    description: Additional arguments to pass to the linter
+    required: false
+    default: ""
+  stylelint_dir:
+    description: Directory where the stylelint command should be run
+    required: false
+  stylelint_extensions:
+    description: Extensions of files to check with stylelint
+    required: false
+    default: "css"
+  stylelint_command_prefix:
+    description: Shell command to prepend to the linter command
+    required: false
+    default: ""
+  stylelint_auto_fix:
+    description: Whether this linter should try to fix code style issues automatically. If set to `true`, it will only work if "auto_fix" is set to `true` as well
+    required: false
+    default: "true"
+
+  # Go
+
+  gofmt:
+    description: Enable or disable gofmt checks
+    required: false
+    default: "false"
+  gofmt_args:
+    description: Additional arguments to pass to the linter
+    required: false
+    default: ""
+  gofmt_dir:
+    description: Directory where the gofmt command should be run
+    required: false
+  gofmt_extensions:
+    description: Extensions of files to check with gofmt
+    required: false
+    default: "go"
+  gofmt_command_prefix:
+    description: Shell command to prepend to the linter command
+    required: false
+    default: ""
+  gofmt_auto_fix:
+    description: Whether this linter should try to fix code style issues automatically. If set to `true`, it will only work if "auto_fix" is set to `true` as well
+    required: false
+    default: "true"
+
+  golint:
+    description: Enable or disable golint checks
+    required: false
+    default: "false"
+  golint_args:
+    description: Additional arguments to pass to the linter
+    required: false
+    default: ""
+  golint_dir:
+    description: Directory where the golint command should be run
+    required: false
+  golint_extensions:
+    description: Extensions of files to check with golint
+    required: false
+    default: "go"
+  golint_command_prefix:
+    description: Shell command to prepend to the linter command
+    required: false
+    default: ""
+  golint_auto_fix:
+    description: Whether this linter should try to fix code style issues automatically. If set to `true`, it will only work if "auto_fix" is set to `true` as well
+    required: false
+    default: "false"
+
+  # JavaScript
+
+  eslint:
+    description: Enable or disable ESLint checks
+    required: false
+    default: "false"
+  eslint_args:
+    description: Additional arguments to pass to the linter
+    required: false
+    default: ""
+  eslint_dir:
+    description: Directory where the ESLint command should be run
+    required: false
+  eslint_extensions:
+    description: Extensions of files to check with ESLint
+    required: false
+    default: "js"
+  eslint_command_prefix:
+    description: Shell command to prepend to the linter command. Will default to `npx --no-install` for NPM and `yarn run --silent` for Yarn.
+    required: false
+    default: ""
+  eslint_auto_fix:
+    description: Whether this linter should try to fix code style issues automatically. If set to `true`, it will only work if "auto_fix" is set to `true` as well
+    required: false
+    default: "true"
+
+  prettier:
+    description: Enable or disable Prettier checks
+    required: false
+    default: "false"
+  prettier_args:
+    description: Additional arguments to pass to the linter
+    required: false
+    default: ""
+  prettier_dir:
+    description: Directory where the Prettier command should be run
+    required: false
+  prettier_extensions:
+    description: Extensions of files to check with Prettier
+    required: false
+    default: "css,html,js,json,jsx,md,sass,scss,ts,tsx,vue,yaml,yml"
+  prettier_command_prefix:
+    description: Shell command to prepend to the linter command. Will default to `npx --no-install` for NPM and `yarn run --silent` for Yarn.
+    required: false
+    default: ""
+  prettier_auto_fix:
+    description: Whether this linter should try to fix code style issues automatically. If set to `true`, it will only work if "auto_fix" is set to `true` as well
+    required: false
+    default: "true"
+
+  xo:
+    description: Enable or disable XO checks
+    required: false
+    default: "false"
+  xo_args:
+    description: Additional arguments to pass to the linter
+    required: false
+    default: ""
+  xo_dir:
+    description: Directory where the XO command should be run
+    required: false
+  xo_extensions:
+    description: Extensions of files to check with XO
+    required: false
+    default: "js"
+  xo_command_prefix:
+    description: Shell command to prepend to the linter command. Will default to `npx --no-install` for NPM and `yarn run --silent` for Yarn.
+    required: false
+    default: ""
+  xo_auto_fix:
+    description: Whether this linter should try to fix code style issues automatically. If set to `true`, it will only work if "auto_fix" is set to `true` as well
+    required: false
+    default: "true"
+
+  # TypeScript
+
+  tsc:
+    description: Enable or disable TypeScript checks
+    required: false
+    default: "false"
+  tsc_args:
+    description: Additional arguments to pass to the linter
+    required: false
+    default: ""
+  tsc_dir:
+    description: Directory where the TSC command should be run
+    required: false
+  tsc_extensions:
+    description: Extensions of files to check with TSC
+    required: false
+    default: "ts"
+  tsc_command_prefix:
+    description: Shell command to prepend to the linter command. Will default to `npx --no-install` for NPM and `yarn run --silent` for Yarn.
+    required: false
+    default: ""
+  tsc_auto_fix:
+    description: Whether this linter should try to fix code style issues automatically. If set to `true`, it will only work if "auto_fix" is set to `true` as well
+    required: false
+    default: "false"
+
+  # PHP
+
+  php_codesniffer:
+    description: Enable or disable PHP_CodeSniffer checks
+    required: false
+    default: "false"
+  php_codesniffer_args:
+    description: Additional arguments to pass to the linter
+    required: false
+    default: ""
+  php_codesniffer_dir:
+    description: Directory where the PHP_CodeSniffer command should be run
+    required: false
+  php_codesniffer_extensions:
+    description: Extensions of files to check with PHP_CodeSniffer
+    required: false
+    default: "php"
+  php_codesniffer_command_prefix:
+    description: Shell command to prepend to the linter command
+    required: false
+    default: ""
+  php_codesniffer_auto_fix:
+    description: Whether this linter should try to fix code style issues automatically. If set to `true`, it will only work if "auto_fix" is set to `true` as well
+    required: false
+    default: "false"
+
+  # Python
+
+  autopep8:
+    description: Enable or disable autopep8 checks
+    required: false
+    default: "false"
+  autopep8_args:
+    description: Additional arguments to pass to the linter
+    required: false
+    default: ""
+  autopep8_dir:
+    description: Directory where the autopep8 command should be run
+    required: false
+  autopep8_extensions:
+    description: Extensions of files to check with autopep8
+    required: false
+    default: "py"
+  autopep8_command_prefix:
+    description: Shell command to prepend to the linter command
+    required: false
+    default: ""
+  autopep8_auto_fix:
+    description: Whether this linter should try to fix code style issues automatically. If set to `true`, it will only work if "auto_fix" is set to `true` as well
+    required: false
+    default: "true"
+
+  black:
+    description: Enable or disable Black checks
+    required: false
+    default: "false"
+  black_args:
+    description: Additional arguments to pass to the linter
+    required: false
+    default: ""
+  black_dir:
+    description: Directory where the Black command should be run
+    required: false
+  black_extensions:
+    description: Extensions of files to check with Black
+    required: false
+    default: "py"
+  black_command_prefix:
+    description: Shell command to prepend to the linter command
+    required: false
+    default: ""
+  black_auto_fix:
+    description: Whether this linter should try to fix code style issues automatically. If set to `true`, it will only work if "auto_fix" is set to `true` as well
+    required: false
+    default: "true"
+
+  clang_format:
+    description: Enable or disable ClangFormat checks
+    required: false
+    default: "false"
+  clang_format_args:
+    description: Additional arguments to pass to the linter
+    required: false
+    default: ""
+  clang_format_dir:
+    description: Directory where the ClangFormat command should be run
+    required: false
+  clang_format_extensions:
+    description: Extensions of files to check with ClangFormat
+    required: false
+    default: "c,cc,cpp,h,hpp,m,mm"
+  clang_format_command_prefix:
+    description: Shell command to prepend to the linter command
+    required: false
+    default: ""
+  clang_format_auto_fix:
+    description: Whether this linter should try to fix code style issues automatically. If set to `true`, it will only work if "auto_fix" is set to `true` as well
+    required: false
+    default: "false"
+
+  flake8:
+    description: Enable or disable Flake8 checks
+    required: false
+    default: "false"
+  flake8_args:
+    description: Additional arguments to pass to the linter
+    required: false
+    default: ""
+  flake8_dir:
+    description: Directory where the Flake8 command should be run
+    required: false
+  flake8_extensions:
+    description: Extensions of files to check with Flake8
+    required: false
+    default: "py"
+  flake8_command_prefix:
+    description: Shell command to prepend to the linter command
+    required: false
+    default: ""
+  flake8_auto_fix:
+    description: Whether this linter should try to fix code style issues automatically. If set to `true`, it will only work if "auto_fix" is set to `true` as well
+    required: false
+    default: "false"
+
+  mypy:
+    description: Enable or disable Mypy checks
+    required: false
+    default: "false"
+  mypy_args:
+    description: Additional arguments to pass to the linter
+    required: false
+    default: ""
+  mypy_dir:
+    description: Directory where the Mypy command should be run
+    required: false
+  mypy_extensions:
+    description: Extensions of files to check with Mypy
+    required: false
+    default: "py"
+  mypy_command_prefix:
+    description: Shell command to prepend to the linter command
+    required: false
+    default: ""
+  mypy_auto_fix:
+    description: Whether this linter should try to fix code style issues automatically. If set to `true`, it will only work if "auto_fix" is set to `true` as well
+    required: false
+    default: "false"
+
+  oitnb:
+    description: Enable or disable oitnb checks
+    required: false
+    default: "false"
+  oitnb_args:
+    description: Additional arguments to pass to the linter
+    required: false
+    default: ""
+  oitnb_dir:
+    description: Directory where the oitnb command should be run
+    required: false
+  oitnb_extensions:
+    description: Extensions of files to check with oitnb
+    required: false
+    default: "py"
+  oitnb_command_prefix:
+    description: Shell command to prepend to the linter command
+    required: false
+    default: ""
+  oitnb_auto_fix:
+    description: Whether this linter should try to fix code style issues automatically. If set to `true`, it will only work if "auto_fix" is set to `true` as well
+    required: false
+    default: "true"
+
+  pylint:
+    description: Enable or disable Pylint checks
+    required: false
+    default: "false"
+  pylint_args:
+    description: Additional arguments to pass to the linter
+    required: false
+    default: ""
+  pylint_dir:
+    description: Directory where the Pylint command should be run
+    required: false
+  pylint_extensions:
+    description: Extensions of files to check with Pylint
+    required: false
+    default: "py"
+  pylint_command_prefix:
+    description: Shell command to prepend to the linter command
+    required: false
+    default: ""
+  pylint_auto_fix:
+    description: Whether this linter should try to fix code style issues automatically. If set to `true`, it will only work if "auto_fix" is set to `true` as well
+    required: false
+    default: "false"
+
+  # Ruby
+
+  rubocop:
+    description: Enable or disable RuboCop checks
+    required: false
+    default: "false"
+  rubocop_args:
+    description: Additional arguments to pass to the linter
+    required: false
+    default: ""
+  rubocop_dir:
+    description: Directory where the RuboCop command should be run
+    required: false
+  rubocop_extensions:
+    description: Extensions of files to check with RuboCop
+    required: false
+    default: "rb"
+  rubocop_command_prefix:
+    description: Shell command to prepend to the linter command
+    required: false
+    default: ""
+  rubocop_auto_fix:
+    description: Whether this linter should try to fix code style issues automatically. If set to `true`, it will only work if "auto_fix" is set to `true` as well
+    required: false
+    default: "true"
+
+  erblint:
+    description: Enable or disable ERB Lint checks
+    required: false
+    default: "false"
+  erblint_args:
+    description: Additional arguments to pass to the linter
+    required: false
+    default: ""
+  erblint_dir:
+    description: Directory where the ERB Lint command should be run
+    required: false
+  erblint_extensions:
+    description: Extensions of files to check with ERB Lint
+    required: false
+    default: "erb"
+  erblint_command_prefix:
+    description: Shell command to prepend to the linter command
+    required: false
+    default: ""
+  erblint_auto_fix:
+    description: Whether this linter should try to fix code style issues automatically. If set to `true`, it will only work if "auto_fix" is set to `true` as well
+    required: false
+    default: "false"
+
+  # Rust
+
+  clippy:
+    description: Enable or disable clippy
+    required: false
+    default: "false"
+  clippy_args:
+    description: Additional arguments to pass to the linter
+    required: false
+    default: ""
+  clippy_dir:
+    description: Directory where the RuboCop command should be run
+    required: false
+  clippy_extensions:
+    description: Extensions of files to check with RuboCop
+    required: false
+    default: "rs"
+  clippy_command_prefix:
+    description: Shell command to prepend to the linter command
+    required: false
+    default: ""
+  clippy_auto_fix:
+    description: Whether this linter should try to fix code style issues automatically. If set to `true`, it will only work if "auto_fix" is set to `true` as well
+    required: false
+    default: "true"
+
+  rustfmt:
+    description: Enable or disable rustfmt
+    required: false
+    default: "false"
+  rustfmt_args:
+    description: Additional arguments to pass to the linter
+    required: false
+    default: "-- --color=never"
+  rustfmt_extensions:
+    description: Extensions of files to check with rustfmt
+    required: false
+    default: "rs"
+  rustfmt_dir:
+    description: Directory where the rustfmt command should be run
+    required: false
+  rustfmt_auto_fix:
+    description: Whether this linter should try to fix code style issues automatically. If set to `true`, it will only work if "auto_fix" is set to `true` as well
+    required: false
+    default: "true"
+
+  # Swift
+
+  # Alias of `swift_format_lockwood` (for backward compatibility)
+  # TODO: Remove alias in v2
+  swiftformat:
+    description: Enable or disable SwiftFormat checks
+    required: false
+    default: "false"
+  swiftformat_args:
+    description: Additional arguments to pass to the linter
+    required: false
+    default: ""
+  swiftformat_dir:
+    description: Directory where the SwiftFormat command should be run
+    required: false
+  swiftformat_extensions:
+    description: Extensions of files to check with SwiftFormat
+    required: false
+    default: "swift"
+  swiftformat_command_prefix:
+    description: Shell command to prepend to the linter command
+    required: false
+    default: ""
+  swiftformat_auto_fix:
+    description: Whether this linter should try to fix code style issues automatically. If set to `true`, it will only work if "auto_fix" is set to `true` as well
+    required: false
+    default: "true"
+
+  swift_format_lockwood:
+    description: Enable or disable SwiftFormat checks
+    required: false
+    default: "false"
+  swift_format_lockwood_args:
+    description: Additional arguments to pass to the linter
+    required: false
+    default: ""
+  swift_format_lockwood_dir:
+    description: Directory where the SwiftFormat command should be run
+    required: false
+  swift_format_lockwood_extensions:
+    description: Extensions of files to check with SwiftFormat
+    required: false
+    default: "swift"
+  swift_format_lockwood_command_prefix:
+    description: Shell command to prepend to the linter command
+    required: false
+    default: ""
+  swift_format_lockwood_auto_fix:
+    description: Whether this linter should try to fix code style issues automatically. If set to `true`, it will only work if "auto_fix" is set to `true` as well
+    required: false
+    default: "true"
+
+  swift_format_official:
+    description: Enable or disable swift-format checks
+    required: false
+    default: "false"
+  swift_format_official_args:
+    description: Additional arguments to pass to the linter
+    required: false
+    default: ""
+  swift_format_official_dir:
+    description: Directory where the swift-format command should be run
+    required: false
+  swift_format_official_extensions:
+    description: Extrensions of files to check with swift-format
+    required: false
+    default: "swift"
+  swift_format_official_command_prefix:
+    description: Shell command to prepend to the linter command
+    required: false
+    default: ""
+  swift_format_official_auto_fix:
+    description: Whether this linter should try to fix code style issues automatically. If set to `true`, it will only work if "auto_fix" is set to `true` as well
+    required: false
+    default: "true"
+
+  swiftlint:
+    description: Enable or disable SwiftLint checks
+    required: false
+    default: "false"
+  swiftlint_args:
+    description: Additional arguments to pass to the linter
+    required: false
+    default: ""
+  swiftlint_dir:
+    description: Directory where the SwiftLint command should be run
+    required: false
+  swiftlint_extensions:
+    description: Extensions of files to check with SwiftLint
+    required: false
+    default: "swift"
+  swiftlint_command_prefix:
+    description: Shell command to prepend to the linter command
+    required: false
+    default: ""
+  swiftlint_auto_fix:
+    description: Whether this linter should try to fix code style issues automatically. If set to `true`, it will only work if "auto_fix" is set to `true` as well
+    required: false
+    default: "true"
+
+  dotnet_format:
+    description: Enable or disable dotnet-format checks
+    required: false
+    default: "false"
+  dotnet_format_args:
+    description: Additional arguments to pass to the linter
+    required: false
+    default: ""
+  dotnet_format_dir:
+    description: Directory where the dotnet-format command should be run
+    required: false
+  dotnet_format_extensions:
+    description: Extensions of files to check with dotnet-format
+    required: false
+    default: "cs"
+  dotnet_format_command_prefix:
+    description: Shell command to prepend to the linter command
+    required: false
+    default: ""
+  dotnet_format_auto_fix:
+    description: Whether this linter should try to fix code style issues automatically. If set to `true`, it will only work if "auto_fix" is set to `true` as well
+    required: false
+    default: "true"
+
+runs:
+  using: node16
+  main: ./dist/index.js
+
+branding:
+  icon: check
+  color: green
