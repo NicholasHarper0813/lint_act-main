@@ -4,7 +4,8 @@ function parseErrorsFromDiff(diff)
 {
 	const errors = [];
 	const files = parseDiff(diff);
-	for (const file of files) {
+	for (const file of files) 
+	{
 		const { chunks, to: path } = file;
 		for (const chunk of chunks) 
 		{
