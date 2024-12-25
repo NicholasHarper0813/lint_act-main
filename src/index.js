@@ -1,14 +1,14 @@
 const { existsSync } = require("fs");
 const { join } = require("path");
-
-const core = require("@actions/core");
-const git = require("./git");
-const linters = require("./linters");
 const { getSummary } = require("./utils/lint-result");
 const { createCheck } = require("./github/api");
 const { getContext } = require("./github/context");
+const core = require("@actions/core");
+const git = require("./git");
+const linters = require("./linters");
 
-async function runAction() {
+async function runAction() 
+{
 	const context = getContext();
 	const commit = core.getInput("commit") === "true";
 	const autoFix = core.getInput("auto_fix") === "true";
@@ -112,14 +112,16 @@ async function runAction() {
 
 	core.startGroup("Create check runs with commit annotations");
 	let groupClosed = false;
-	try {
+	try 
+	{
 		await Promise.all(
 			checks.map(({ lintCheckName, lintResult, summary }) =>
 				createCheck(lintCheckName, headSha, context, lintResult, neutralCheckOnWarning, summary),
 			),
 		);
 	} 
-	catch (err) {
+	catch (err) 
+	{
 		core.endGroup();
 		groupClosed = true;
 		core.warning("Some check runs could not be created.");
