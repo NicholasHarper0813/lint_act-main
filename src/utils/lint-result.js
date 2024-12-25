@@ -2,7 +2,7 @@ function initLintResult()
 {
 	return 
 	{
-		isSuccess: true, // Usually determined by the exit code of the linting command
+		isSuccess: true,
 		warning: [],
 		error: [],
 	};
